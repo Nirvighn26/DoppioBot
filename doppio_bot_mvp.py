@@ -8,8 +8,8 @@ st.set_page_config(page_title="DoppioBot", layout="centered")
 st.title("DoppioBot - German AI Assistant")
 st.markdown("Ask me anything related to your business or product FAQs!")
 
-openai.api_key = st.secrets["OPENAI_API_KEY"]
-
+openai.api_key = st.secrets.get("OPENAI_API_KEY", "test")
+st.write("API Key Loaded: ", openai.api_key[:5] + "..." if openai.api_key != "test" else "Missing!")
 # Load FAQs
 @st.cache_data
 def load_faqs():
