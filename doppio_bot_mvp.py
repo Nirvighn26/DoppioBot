@@ -1,49 +1,33 @@
 import streamlit as st
 import pandas as pd
-import openai
-from langdetect import detect
+from openai import OpenAI
 
-st.set_page_config(page_title="DoppioBot", layout="centered")
+# Load API key securely from Streamlit secrets
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-st.title("DoppioBot - German AI Assistant")
-st.markdown("Ask me anything related to your business or product FAQs!")
-
-openai.api_key = st.secrets.get("OPENAI_API_KEY", "test")
-st.write("API Key Loaded: ", openai.api_key[:5] + "..." if openai.api_key != "test" else "Missing!")
-# Load FAQs
 @st.cache_data
 def load_faqs():
-    df = pd.read_csv("faqs.csv")
-    return df
-
-faqs = load_faqs()
+    return pd.read_csv("faqs.csv")
 
 def generate_prompt(user_question):
-    prompt = "You are a helpful AI assistant for a German business. Answer the user's question based only on the following FAQs:\n\n"
-    for index, row in faqs.iterrows():
+    prompt = "You are DoppioBot, a helpful AI that answers customer questions in German and English based on the following examples.\n\n"
+    for _, row in df.iterrows():
         prompt += f"Q: {row['Question']}\nA: {row['Answer']}\n\n"
-    prompt += f"\nUser question: {user_question}\nAnswer:"
+    prompt += f"Q: {user_question}\nA:"
     return prompt
 
 def get_answer(user_question):
     prompt = generate_prompt(user_question)
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You're a helpful AI assistant for German FAQs."},
-                {"role": "user", "content": prompt}
-            ],
-            max_tokens=300
-        )
-        return response['choices'][0]['message']['content'].strip()
-    except Exception as e:
-        return f"Error: {str(e)}"
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.5,
+    )
+    return response.choices[0].message.content.strip()
 
-# User input
-user_question = st.text_input("Type your question here:")
+# Streamlit UI
+st.title("DoppioBot MVP")
+st.write("Ask me anything about your order, our products, or services.")
 
-if user_question:
-    st.write("Generating answer...")
-    answer = get_answer(user_question)
-    st.markdown(f"**Answer:** {answer}")
+df = load_faqs()
+user_question = st.text_input("
