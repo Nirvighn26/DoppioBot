@@ -1,48 +1,26 @@
 import streamlit as st
-import pandas as pd
-import os
 from openai import OpenAI
 
-# Load OpenAI API key
-os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
-client = OpenAI()
+# Set your API key securely
+client = OpenAI(api_key="sk-proj-...")  # Replace with your actual key
 
-# Load FAQ data
-@st.cache_data
-def load_faqs():
-    return pd.read_csv("faqs.csv")
-
-df = load_faqs()
-
-# Prompt generator
-def generate_prompt(user_question):
-    prompt = "You are DoppioBot, a helpful assistant who answers customer questions in German and English. Base your answers on these examples:\n\n"
-    for _, row in df.iterrows():
-        prompt += f"Q: {row['Question']}\nA: {row['Answer']}\n\n"
-    prompt += f"Q: {user_question}\nA:"
-    return prompt
-
-# Get answer from OpenAI
-def get_answer(user_question):
-    prompt = generate_prompt(user_question)
+# Function to get response from OpenAI
+def get_answer(user_input):
     response = client.chat.completions.create(
-        model="gpt-3.5-turbo",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.3
+        model="gpt-4o",  # You can also use "gpt-3.5-turbo" or "gpt-4o-mini"
+        messages=[
+            {"role": "system", "content": "You are a helpful AI assistant."},
+            {"role": "user", "content": user_input}
+        ],
+        temperature=0.7
     )
-    return response.choices[0].message.content.strip()
+    return response.choices[0].message.content
 
 # Streamlit UI
-st.title("DoppioBot")
-st.write("Ask me a question in German or English.")
+st.title("Doppio Bot MVP")
 
-user_question = st.text_input("Type your question here:")
+user_question = st.text_input("Ask something:")
 
 if user_question:
-    with st.spinner("DoppioBot is thinking..."):
-        try:
-            answer = get_answer(user_question)
-            st.success(answer)
-        except Exception as e:
-            st.error("Oops! Something went wrong.")
-            st.exception(e)
+    answer = get_answer(user_question)
+    st.markdown(f"**DoppioBot:** {answer}")
