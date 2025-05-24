@@ -30,4 +30,8 @@ st.title("DoppioBot MVP")
 st.write("Ask me anything about your order, our products, or services.")
 
 df = load_faqs()
-user_question = st.text_input("
+user_question = st.text_input("Your question:")
+
+if user_question:
+    answer = get_answer(user_question)
+    st.write("**Answer:**", answer)
